@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, UseGuards, Req } from '@nestjs/common';
 import { HttpException } from 'src/exceptions/httpException';
 import { SurveyNotFoundException } from 'src/exceptions/surveyNotFoundException';
 import { checkSign } from 'src/utils/checkSign';
@@ -25,6 +25,7 @@ import { UserService } from 'src/modules/auth/services/user.service';
 import { WorkspaceMemberService } from 'src/modules/workspace/services/workspaceMember.service';
 import { QUESTION_TYPE } from 'src/enums/question';
 import { OpenAuthGuard } from 'src/guards/openAuth.guard';
+import { Authentication } from 'src/guards/authentication.guard';
 
 const optionQuestionType: Array<string> = [
   QUESTION_TYPE.RADIO,
@@ -106,6 +107,39 @@ export class SurveyResponseController {
       throw error;
     }
   }
+  
+  @Post('/createResponseWithAuth')
+  @UseGuards(Authentication)
+  @HttpCode(200)
+  async createResponseWithAuth(@Body() reqBody, @Req() request) {
+    const value = await this.validateParams(reqBody);
+    const { encryptType, data, sessionId } = value;
+
+    // 检查签名
+    checkSign(reqBody);
+
+    // 解密数据
+    let result = data;
+    let formValues: Record<string, any> = {};
+    if (encryptType === ENCRYPT_TYPE.RSA && Array.isArray(data)) {
+      result = await this.getDecryptedDataRSA(data, sessionId);
+    }
+    formValues = JSON.parse(JSON.stringify(result));
+    
+    // 从JWT中获取用户ID
+    const userId = request.user?._id?.toString() || null;
+    
+    try {
+      await this.createResponseProcess({ ...value, data: formValues, userId });
+      return {
+        code: 200,
+        msg: '提交成功',
+      };
+    } catch (error) {
+      this.logger.error(`createResponseWithAuth error: ${error.message}`);
+      throw error;
+    }
+  }
   private async validateParams(reqBody) {
     // 校验参数
     const { value, error } = Joi.object({
@@ -157,6 +191,7 @@ export class SurveyResponseController {
       password,
       whitelist: whitelistValue,
       data: formValues,
+      userId,
     } = params;
 
     // 查询schema
@@ -313,6 +348,7 @@ export class SurveyResponseController {
       surveyId: responseSchema.pageId,
       optionTextAndId,
       channelId: params.channelId,
+      userId,
     };
     const surveyResponse =
       await this.surveyResponseService.createSurveyResponse(model);
