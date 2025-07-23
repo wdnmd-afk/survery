@@ -1,4 +1,12 @@
-import { Controller, Post, Body, HttpCode, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  UseGuards,
+  Req,
+  UseInterceptors,
+} from '@nestjs/common';
 import { HttpException } from 'src/exceptions/httpException';
 import { SurveyNotFoundException } from 'src/exceptions/surveyNotFoundException';
 import { checkSign } from 'src/utils/checkSign';
@@ -26,6 +34,7 @@ import { WorkspaceMemberService } from 'src/modules/workspace/services/workspace
 import { QUESTION_TYPE } from 'src/enums/question';
 import { OpenAuthGuard } from 'src/guards/openAuth.guard';
 import { Authentication } from 'src/guards/authentication.guard';
+import { OptionalAuthInterceptor } from 'src/interceptors/optionalAuth.interceptor';
 
 const optionQuestionType: Array<string> = [
   QUESTION_TYPE.RADIO,
@@ -49,8 +58,11 @@ export class SurveyResponseController {
   ) {}
 
   @Post('/createResponse')
+  @UseInterceptors(OptionalAuthInterceptor)
   @HttpCode(200)
-  async createResponse(@Body() reqBody) {
+  async createResponse(@Body() reqBody, @Req() request) {
+
+
     const value = await this.validateParams(reqBody);
     const { encryptType, data, sessionId } = value;
 
@@ -64,8 +76,19 @@ export class SurveyResponseController {
       result = await this.getDecryptedDataRSA(data, sessionId);
     }
     formValues = JSON.parse(JSON.stringify(result));
+
+    // 从JWT中获取用户ID，如果不存在则为null
+    const userId = request.user?._id?.toString() || null;
+    console.log('=== createResponse DEBUG ===');
+    console.log('userId:', userId);
+    console.log('request.user:', request.user);
+    console.log('=== END DEBUG ===');
+    this.logger.info(
+      `=== createResponse DEBUG === userId: ${userId} === user: ${JSON.stringify(request.user)} ===`,
+    );
+
     try {
-      await this.createResponseProcess({ ...value, data: formValues });
+      await this.createResponseProcess({ ...value, data: formValues, userId });
       return {
         code: 200,
         msg: '提交成功',
@@ -75,10 +98,11 @@ export class SurveyResponseController {
       throw error;
     }
   }
+
   @Post('/createResponseWithOpen')
   @UseGuards(OpenAuthGuard)
   @HttpCode(200)
-  async createResponseWithOpen(@Body() reqBody) {
+  async createResponseWithOpen(@Body() reqBody, @Req() request) {
     if (!reqBody.channelId) {
       throw new HttpException('缺少渠道参数', EXCEPTION_CODE.PARAMETER_ERROR);
     }
@@ -93,9 +117,13 @@ export class SurveyResponseController {
       typeof data === 'string'
         ? JSON.parse(data)
         : JSON.parse(JSON.stringify(data));
+
+    // 从JWT中获取用户ID，如果不存在则为null
+    const userId = request.user?._id?.toString() || null;
+
     try {
       await this.createResponseProcess(
-        { ...value, data: formValues, channelId },
+        { ...value, data: formValues, channelId, userId },
         false,
       );
       return {
@@ -107,7 +135,7 @@ export class SurveyResponseController {
       throw error;
     }
   }
-  
+
   @Post('/createResponseWithAuth')
   @UseGuards(Authentication)
   @HttpCode(200)
@@ -125,10 +153,10 @@ export class SurveyResponseController {
       result = await this.getDecryptedDataRSA(data, sessionId);
     }
     formValues = JSON.parse(JSON.stringify(result));
-    
+
     // 从JWT中获取用户ID
     const userId = request.user?._id?.toString() || null;
-    
+
     try {
       await this.createResponseProcess({ ...value, data: formValues, userId });
       return {
@@ -140,6 +168,7 @@ export class SurveyResponseController {
       throw error;
     }
   }
+
   private async validateParams(reqBody) {
     // 校验参数
     const { value, error } = Joi.object({
@@ -159,6 +188,7 @@ export class SurveyResponseController {
     }
     return value;
   }
+
   private async getDecryptedDataRSA(data, sessionId) {
     const sessionData =
       await this.clientEncryptService.getEncryptInfoById(sessionId);
@@ -182,6 +212,7 @@ export class SurveyResponseController {
       );
     }
   }
+
   async createResponseProcess(params, canPush = true) {
     const {
       surveyPath,

@@ -7,6 +7,8 @@ export class SurveyResponse extends BaseEntity {
   @Column()
   pageId: string;
 
+
+
   @Column()
   surveyPath: string;
 
