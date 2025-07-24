@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run start:dev:*)"
+      "Bash(npm run start:dev:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm test -- --testPathPattern=internal-whitelist.guard.spec.ts)"
     ],
     "deny": []
   }
