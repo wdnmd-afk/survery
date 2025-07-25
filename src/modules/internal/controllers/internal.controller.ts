@@ -1,7 +1,11 @@
 import { Controller, Post, Body, HttpCode, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { InternalService } from '../services/internal.service';
-import { GetUserDto, GetUserSubmissionsDto, GetSurveyContentDto } from '../dto/internal.dto';
+import {
+  GetUserDto,
+  GetUserSubmissionsDto,
+  GetSurveyContentDto,
+} from '../dto/internal.dto';
 import { InternalWhitelistGuard } from 'src/guards/internal-whitelist.guard';
 
 @ApiTags('internal')

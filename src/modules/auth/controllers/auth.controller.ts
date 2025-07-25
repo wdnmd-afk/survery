@@ -138,8 +138,8 @@ export class AuthController {
       throw new Error(
         'generateToken erro:' +
           error.message +
-          this.configService.get<string>('XIAOJU_SURVEY_JWT_SECRET') +
-          this.configService.get<string>('XIAOJU_SURVEY_JWT_EXPIRES_IN'),
+          this.configService.get<string>('KD_SURVEY_JWT_SECRET') +
+          this.configService.get<string>('KD_SURVEY_JWT_EXPIRES_IN'),
       );
     }
 

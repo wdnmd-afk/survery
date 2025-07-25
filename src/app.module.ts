@@ -58,13 +58,13 @@ import { InternalModule } from './modules/internal/internal.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const url = await configService.get<string>('XIAOJU_SURVEY_MONGO_URL');
+        const url = await configService.get<string>('KD_SURVEY_MONGO_URL');
         const authSource =
           (await configService.get<string>(
-            'XIAOJU_SURVEY_MONGO_AUTH_SOURCE',
+            'KD_SURVEY_MONGO_AUTH_SOURCE',
           )) || '';
         const database =
-          (await configService.get<string>('XIAOJU_SURVEY_MONGO_DB_NAME')) ||
+          (await configService.get<string>('KD_SURVEY_MONGO_DB_NAME')) ||
           '';
         const ret: Record<string, any> = {
           type: 'mongodb',
@@ -145,13 +145,13 @@ export class AppModule {
     this.pluginManager.registerPlugin(
       new ResponseSecurityPlugin(
         this.configService.get<string>(
-          'XIAOJU_SURVEY_RESPONSE_AES_ENCRYPT_SECRET_KEY',
+          'KD_SURVEY_RESPONSE_AES_ENCRYPT_SECRET_KEY',
         ),
       ),
       new SurveyUtilPlugin(),
     );
     Logger.init({
-      filename: this.configService.get<string>('XIAOJU_SURVEY_LOGGER_FILENAME'),
+      filename: this.configService.get<string>('KD_SURVEY_LOGGER_FILENAME'),
     });
   }
 }

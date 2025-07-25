@@ -15,11 +15,11 @@ export class AuthRedisService {
   ) {}
 
   async generateToken({ _id, username }: { _id: string; username: string }) {
-    const useRedis = this.configService.get<boolean>('XIAOJU_SURVEY_USE_REDIS_TOKEN', false);
+    const useRedis = this.configService.get<boolean>('KD_SURVEY_USE_REDIS_TOKEN', false);
     
     if (useRedis) {
       const token = nanoid(32);
-      const expiresIn = this.configService.get<string>('XIAOJU_SURVEY_JWT_EXPIRES_IN', '8h');
+      const expiresIn = this.configService.get<string>('KD_SURVEY_JWT_EXPIRES_IN', '8h');
       const ttl = this.parseExpiresIn(expiresIn);
       
       const userInfo = { _id, username, loginTime: Date.now() };
@@ -27,9 +27,9 @@ export class AuthRedisService {
       
       return token;
     } else {
-      const secret = this.configService.get<string>('XIAOJU_SURVEY_JWT_SECRET');
+      const secret = this.configService.get<string>('KD_SURVEY_JWT_SECRET');
       const expiresIn: StringValue = this.configService.get<StringValue>(
-        'XIAOJU_SURVEY_JWT_EXPIRES_IN',
+        'KD_SURVEY_JWT_EXPIRES_IN',
       );
       const signOptions: SignOptions = {
         expiresIn,
@@ -39,7 +39,7 @@ export class AuthRedisService {
   }
 
   async verifyToken(token: string) {
-    const useRedis = this.configService.get<boolean>('XIAOJU_SURVEY_USE_REDIS_TOKEN', false);
+    const useRedis = this.configService.get<boolean>('KD_SURVEY_USE_REDIS_TOKEN', false);
     
     if (useRedis) {
       const userInfo = await this.redisService.getToken(`token:${token}`);
@@ -53,9 +53,9 @@ export class AuthRedisService {
         throw new Error('用户不存在');
       }
       
-      const extendToken = this.configService.get<boolean>('XIAOJU_SURVEY_EXTEND_TOKEN_ON_USE', true);
+      const extendToken = this.configService.get<boolean>('KD_SURVEY_EXTEND_TOKEN_ON_USE', true);
       if (extendToken) {
-        const expiresIn = this.configService.get<string>('XIAOJU_SURVEY_JWT_EXPIRES_IN', '8h');
+        const expiresIn = this.configService.get<string>('KD_SURVEY_JWT_EXPIRES_IN', '8h');
         const ttl = this.parseExpiresIn(expiresIn);
         await this.redisService.extendToken(`token:${token}`, ttl);
       }
@@ -66,7 +66,7 @@ export class AuthRedisService {
       try {
         decoded = verify(
           token,
-          this.configService.get<string>('XIAOJU_SURVEY_JWT_SECRET'),
+          this.configService.get<string>('KD_SURVEY_JWT_SECRET'),
         );
       } catch (err) {
         throw new Error('用户凭证错误');
@@ -80,7 +80,7 @@ export class AuthRedisService {
   }
 
   async logout(token: string) {
-    const useRedis = this.configService.get<boolean>('XIAOJU_SURVEY_USE_REDIS_TOKEN', false);
+    const useRedis = this.configService.get<boolean>('KD_SURVEY_USE_REDIS_TOKEN', false);
     
     if (useRedis) {
       await this.redisService.deleteToken(`token:${token}`);

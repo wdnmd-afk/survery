@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
-    .setTitle('XIAOJU SURVEY')
+    .setTitle('KD SURVEY')
     .setDescription('')
     .setVersion('1.0')
     .addTag('auth')

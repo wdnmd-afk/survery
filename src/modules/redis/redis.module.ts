@@ -11,11 +11,11 @@ import { RedisService } from './redis.service';
       useFactory: async (configService: ConfigService) => {
         const Redis = require('ioredis');
         return new Redis({
-          host: configService.get('XIAOJU_SURVEY_REDIS_HOST') || 'localhost',
-          port: configService.get('XIAOJU_SURVEY_REDIS_PORT') || 6379,
-          username: configService.get('XIAOJU_SURVEY_REDIS_USERNAME'),
-          password: configService.get('XIAOJU_SURVEY_REDIS_PASSWORD'),
-          db: configService.get('XIAOJU_SURVEY_REDIS_DB') || 0,
+          host: configService.get('KD_SURVEY_REDIS_HOST') || 'localhost',
+          port: configService.get('KD_SURVEY_REDIS_PORT') || 6379,
+          username: configService.get('KD_SURVEY_REDIS_USERNAME'),
+          password: configService.get('KD_SURVEY_REDIS_PASSWORD'),
+          db: configService.get('KD_SURVEY_REDIS_DB') || 0,
         });
       },
       inject: [ConfigService],
